@@ -1,27 +1,67 @@
 const router = require("express").Router()
 const User = require("../models/User")
 const bcrypt = require("bcryptjs")
+const jwt = require("jsonwebtoken")
+const SECRET_KEY = process.env.SECRET_KEY
 
 // Login routes
 router
     .route("/login")
     .post(async (req, res) => {
         const { username, password } = req.body
-        const findUser = await User.findOne({ username })
         
+        try {
+            const findUser = await User.findOne({ username })
+            
+            if (findUser) {
 
-        // !findUser && res.status(400).json({
-        //     status: `User not found.`
-        // })
+                const verifyPwd = await bcrypt.compare(password, findUser.password)
 
-        !findUser
-            ? res.status(400).json({
-                status: `User not found.`
+                const token = jwt.sign(
+                    { username: findUser.username },
+                    SECRET_KEY,
+                    { expiresIn: 60 * 60 * 24}
+                )
+
+                verifyPwd
+                    ? res.status(200).json({
+                        status: "User logged in.",
+                        token,
+                        findUser
+                    })
+                    : res.status(403).json({
+                        status: "Wrong password peasant!"
+                    })
+
+                // TODO: talk about tokens
+            } else {
+                res.status(401).json({
+                    status: "User not found."
+                })
+            }
+        } catch(err) {
+            res.status(500).json({
+                status: "Generic Error",
+                error: `${err}`
             })
-            : res.status(200).json({
-                status: `Logged in.`,
-                findUser
-            })
+        }
+        
+        
+        // const verifyPwd = await bcrypt.compare(password, findUser.password )
+        // console.log(verifyPwd)
+
+        // // !findUser && res.status(400).json({
+        // //     status: `User not found.`
+        // // })
+
+        // !findUser
+        //     ? res.status(400).json({
+        //         status: `User not found.`
+        //     })
+        //     : res.status(200).json({
+        //         status: `Logged in.`,
+        //         findUser
+        //     })
     })
 
 // Register routes
@@ -42,8 +82,15 @@ router
                 })
                 newUser.save()
 
+                const token = jwt.sign(
+                    { username: newUser.username },
+                    SECRET_KEY,
+                    { expiresIn: 60 * 60 * 24}
+                )
+
                 res.status(201).json({
                     status: `User created`,
+                    token,
                     newUser
                 })
             }

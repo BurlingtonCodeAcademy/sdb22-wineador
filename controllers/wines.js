@@ -1,12 +1,12 @@
 const router = require("express").Router()
+const session = require("../middlewares/session")
 
 router
     .route("/")
     .get((req, res) => {
         // get all wines
-        const username = req.query.username
-        console.log(username)
-        res.send("Get wine route hit.")
+        console.log(req.user)
+        res.status(200).json({ message: "Hit"})
     })
     .post((req, res) => {
         // post our wines

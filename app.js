@@ -11,14 +11,14 @@ const Express = require("express"),
 
     db = require("./db"),
     auth = require("./controllers/auth")
-    wines = require("./controllers/wines")
-
+    wines = require("./controllers/wines"),
+    session = require("./middlewares/session")
 
 
 app.use(cors())
 app.use(Express.json())
 app.use("/api/auth", auth)
-app.use("/api/wines", wines)
+app.use("/api/wines", session, wines)
 
 mongoose
     .connect(MONGO_URL, {
